@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHEL V5.2 - CYBER CIRCUIT CORE 🦉⚛️</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root { --bg: #030303; --card: #0e0e0e; --accent: #00ffff; --text: #f0f0f0; --danger: #ff3333; --warning: #ffcc00; --neon-green: #30ff10; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 10px; padding-bottom: 220px; margin: 0; overflow-x: hidden; }
+        .card { background: var(--card); padding: 15px; border-radius: 12px; margin-bottom: 12px; border: 1px solid #1a1a1a; box-shadow: 0 2px 10px rgba(0,255,255,0.03); position: relative; backdrop-filter: blur(2px); }
+        
+        /* CANVAS DE FONDO */
+        #bg_circuits { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5; pointer-events: none; }
+
+        /* REACTORES OEE LÍNEAS */
+        .oee-wrapper { position: relative; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .oee-svg { transform: rotate(-90deg); width: 65px; height: 65px; }
+        .oee-bg { fill: none; stroke: #1a1a1a; stroke-width: 5; }
+        .oee-progress { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; stroke-dasharray: 188.5; }
+        .oee-text { position: absolute; font-size: 12px; font-weight: bold; text-align: center; width: 100%; transition: color 0.3s; }
+        
+        /* ANIMACIONES */
+        @keyframes pulse-red-reactor { 0% { filter: drop-shadow(0 0 1px var(--danger)); opacity: 1; } 50% { filter: drop-shadow(0 0 10px var(--danger)); opacity: 0.5; } 100% { filter: drop-shadow(0 0 1px var(--danger)); opacity: 1; } }
+        @keyframes pulse-green-reactor { 0% { filter: drop-shadow(0 0 2px var(--neon-green)); opacity: 1; } 50% { filter: drop-shadow(0 0 12px var(--neon-green)); opacity: 0.7; } 100% { filter: drop-shadow(0 0 2px var(--neon-green)); opacity: 1; } }
+        
+        .critical-reactor { animation: pulse-red-reactor 0.6s infinite !important; stroke-dashoffset: 0 !important; stroke: var(--danger) !important; }
+        .full-power-reactor { animation: pulse-green-reactor 1.5s infinite; stroke: var(--neon-green) !important; }
+
+        /* TOLVAS STARK */
+        .energy-bar-bg { background: #080808; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #222; }
+        .energy-fill { height: 100%; width: 0%; transition: width 0.5s ease, background 0.3s; }
+        @keyframes bar-flash-red { 0% { background: var(--danger); opacity: 1; } 50% { background: #500; opacity: 0.5; } 100% { background: var(--danger); opacity: 1; } }
+        .critical-bar { animation: bar-flash-red 0.6s infinite !important; width: 100% !important; }
+        .full-power-bar { animation: pulse-green-reactor 1.5s infinite; background: var(--neon-green) !important; }
+
+        /* ALERTAS */
+        @keyframes pulse-green-alert { 0% { border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 2px var(--neon-green); } 50% { border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); opacity: 0.7; } 100% { border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 2px var(--neon-green); } }
+        @keyframes pulse-red-alert { 0% { border-color: var(--danger); color: white; background: #1a1a1a; box-shadow: 0 0 2px var(--danger); } 50% { border-color: var(--danger); color: white; background: #300; box-shadow: 0 0 15px var(--danger); } 100% { border-color: var(--danger); color: white; background: #1a1a1a; box-shadow: 0 0 2px var(--danger); } }
+        .alert-green { animation: pulse-green-alert 1.5s infinite !important; }
+        .alert-red { animation: pulse-red-alert 0.6s infinite !important; }
+
+        /* HUD LAYOUT */
+        .grid-header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .row-nombres { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .grid-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+        .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        
+        input, textarea { background: #111; color: #fff; border: 1px solid #2a2a2a; padding: 10px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; outline: none; transition: border 0.3s; }
+        input:focus { border-color: var(--accent); }
+        .btn { background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); border-top: 2px solid var(--accent); z-index: 100; box-sizing: border-box; padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .btn-group { display: flex; gap: 8px; justify-content: center; }
+        #fusion_core_panel { position: relative; width: 100%; height: 110px; background: radial-gradient(circle, #0a0a0a 0%, #000 70%); border-radius: 12px; border: 1px solid #222; overflow: hidden; }
+        #core_canvas { width: 100%; height: 100%; display: block; }
+        .core-stats-overlay { position: absolute; bottom: 5px; left: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; pointer-events: none; }
+        .core-stat-label { font-size: 8px; color: #aaa; text-transform: uppercase; }
+        .core-stat-val { font-size: 14px; font-weight: bold; color: var(--text); }
+        .core-stat-oee { font-size: 11px; font-weight: bold; }
+
+        small { color: #888; text-transform: uppercase; font-size: 0.7em; letter-spacing: 1px; }
+        h4 { margin: 8px 0; color: var(--accent); text-transform: uppercase; font-size: 0.8em; letter-spacing: 2px; border-left: 2px solid var(--accent); padding-left: 6px; }
+        @media print { .no-print, .footer, button, .card { display: none !important; } #reporte_imprimible { display: block !important; } }
+        #reporte_imprimible { display: none; }
+    </style>
+</head>
+<body>
+
+    <canvas id="bg_circuits"></canvas>
+    
+    <datalist id="lista_motivos_aprendidos"></datalist>
+
+    <h3 style="text-align: center; letter-spacing: 6px; color: var(--accent); margin: 10px 0;">CORE FUSION V5.2 🚀</h3>
+    
+    <div class="card" style="border-color: #333;">
+        <div class="grid-header">
+            <div><small>Fecha</small><input type="date" id="f_fecha" onchange="syncTotales()"></div>
+            <div><small>Turno</small><input type="text" id="f_turno" value="1 A" oninput="save()"></div>
+            <div><small>Horas</small><input type="number" id="f_hrs" value="12" oninput="syncTotales()"></div>
+        </div>
+        <div class="row-nombres">
+            <div style="grid-column: span 2;"><small>Supervisor</small><input type="text" id="h_sup" placeholder="Supervisor" oninput="save()"></div>
+            <div><small>ILUO A</small><input type="text" id="h_iluoa" placeholder="Op A" oninput="save()"></div>
+            <div><small>ILUO B</small><input type="text" id="h_iluob" placeholder="Op B" oninput="save()"></div>
+        </div>
+    </div>
+
+    <div id="app" class="grid-main"></div>
+
+    <div class="grid-main">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center"><h4>Premezclas</h4><label style="font-size:10px; color:var(--accent)"><input type="checkbox" id="chk_pre" checked> WA</label></div>
+            <textarea id="f_pre" rows="2" placeholder="Notas premezcla..." oninput="save()"></textarea>
+        </div>
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center"><h4>Tolvas Pulmón</h4><label style="font-size:10px; color:var(--accent)"><input type="checkbox" id="chk_tol" checked> WA</label></div>
+            <div id="tolvas_hud" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 8px;"></div>
+        </div>
+    </div>
+
+    <div class="grid-main no-print">
+        <div class="card">
+            <h4>Seguridad</h4>
+            <div class="grid-5" style="gap:5px;">
+                <div><small>Roj</small><input type="number" id="k_troja" value="0" oninput="updateSecurityStatus()"></div>
+                <div><small>Ama</small><input type="number" id="k_tamari" value="0" oninput="updateSecurityStatus()"></div>
+                <div><small>OPL</small><input type="number" id="k_opl" value="0" oninput="updateSecurityStatus()"></div>
+                <div><small>Inci</small><input type="number" id="k_inci" value="0" oninput="updateSecurityStatus()"></div>
+                <div><small>Acci</small><input type="number" id="k_acci" value="0" oninput="updateSecurityStatus()"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h4>Jumbos Pendientes (Meta 12)</h4>
+            <div class="grid-3">
+                <div><small>L1</small><input type="number" id="j_l1" value="0" style="text-align:center;" oninput="updateJumboColor(this)"></div>
+                <div><small>L2</small><input type="number" id="j_l2" value="0" style="text-align:center;" oninput="updateJumboColor(this)"></div>
+                <div><small>L3</small><input type="number" id="j_l3" value="0" style="text-align:center;" oninput="updateJumboColor(this)"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="reporte_imprimible"></div>
+
+    <div class="footer">
+        <div id="fusion_core_panel" onclick="pulseCoreOnClick()">
+            <canvas id="core_canvas"></canvas>
+            <div id="resumen_core" class="core-stats-overlay"></div>
+        </div>
+        <div class="btn-group no-print">
+            <button class="btn" style="flex: 2; box-shadow: 0 0 8px var(--accent);" onclick="copiarWhatsApp()">WHATSAPP 📋</button>
+            <button class="btn" style="flex: 1; background: #222; color: #ccc; border:1px solid #333;" onclick="prepararPDF()">PDF 🖨️</button>
+            <button class="btn" style="flex: 0.5; background: var(--danger); color: #000;" onclick="borrarDatos()">🗑️</button>
+        </div>
+    </div>
+
+    <script>
+        const config = [
+            { id: 'L1', n: 'Línea 1', cad: 14, coater: true }, { id: 'L2', n: 'Línea 2', cad: 8, coater: true }, { id: 'L3', n: 'Línea 3', cad: 14, coater: true },
+            { id: 'D1', n: 'Dosificado L1', cad: 20 }, { id: 'D2', n: 'Dosificado L2', cad: 20 }, { id: 'D3', n: 'Dosificado L3', cad: 20 }
+        ];
+        let datos = [];
+        const idsTolvas = ["32", "33", "3", "4", "82", "83"];
+        let coreMetrics = { extOEE: 0, coatOEE: 0, dosOEE: 0 };
+
+        // --- FUNCIONES DE MEMORIA MIAU ---
+        function actualizarDatalist() {
+            const list = document.getElementById('lista_motivos_aprendidos');
+            const aprendidos = JSON.parse(localStorage.getItem('stark_diccionario')) || ["LIMPIEZA", "AJUSTE SENSOR", "CAMBIO MALLA"];
+            list.innerHTML = aprendidos.map(m => `<option value="${m}">`).join('');
+        }
+
+        function calcularOEE(real, objetivo) { return objetivo > 0 ? (real / objetivo * 100) : (real > 0 ? 100 : 0); }
+
+        function updateOEEVisual(index, oee, isCoater = false) {
+            const circle = document.getElementById(isCoater ? `coater_path_${index}` : `oee_path_${index}`);
+            const text = document.getElementById(isCoater ? `coater_text_${index}` : `oee_val_${index}`);
+            if(!circle) return; circumference = 188.5; offset = circumference - (Math.min(oee, 100) / 100) * circumference;
+            circle.style.strokeDashoffset = offset; text.innerText = oee.toFixed(1) + "%";
+            circle.classList.remove('full-power-reactor', 'critical-reactor'); text.style.color = "var(--text)";
+            if(oee <= 0) { circle.classList.add('critical-reactor'); text.style.color = "var(--danger)"; }
+            else if(oee >= 100) { circle.classList.add('full-power-reactor'); text.style.color = "var(--neon-green)"; }
+            else if(oee >= 85) { circle.style.stroke = "var(--accent)"; text.style.color = "var(--accent)"; }
+            else { circle.style.stroke = "var(--warning)"; text.style.color = "var(--warning)"; }
+        }
+
+        function updateSecurityStatus() {
+            const positives = ['k_troja', 'k_tamari', 'k_opl'];
+            const negatives = ['k_inci', 'k_acci'];
+            positives.forEach(id => {
+                const el = document.getElementById(id); const v = parseInt(el.value) || 0;
+                el.classList.remove('alert-green', 'alert-red'); if(v >= 1) el.classList.add('alert-green'); else el.classList.add('alert-red');
+            });
+            negatives.forEach(id => {
+                const el = document.getElementById(id); const v = parseInt(el.value) || 0;
+                el.classList.remove('alert-green', 'alert-red'); if(v === 0) el.classList.add('alert-green'); else el.classList.add('alert-red');
+            });
+            save();
+        }
+
+        function updateJumboColor(el) {
+            const v = parseInt(el.value) || 0; el.classList.remove('alert-green', 'alert-red'); el.style.borderColor = ""; el.style.color = "";
+            if(v <= 1) { el.classList.add('alert-green'); } else if(v === 2) { el.style.borderColor = "var(--accent)"; el.style.color = "var(--accent)"; } else { el.classList.add('alert-red'); }
+            save();
+        }
+
+        function updateTolvaVisual(id, valor) {
+            const v = parseFloat(valor) || 0; const fill = document.getElementById(`fill_${id}`);
+            document.getElementById(`val_${id}`).innerText = v + " T";
+            fill.classList.remove('full-power-bar', 'critical-bar'); fill.style.background = ""; fill.style.width = Math.min((v / 20) * 100, 100) + "%";
+            if (v <= 0) fill.classList.add('critical-bar');
+            else if (v <= 4) fill.style.background = "var(--danger)";
+            else if (v <= 8) fill.style.background = "var(--warning)";
+            else if (v <= 19) fill.style.background = "var(--accent)";
+            else fill.classList.add('full-power-bar');
+            save();
+        }
+
+        function updateValue(index, field, value) {
+            datos[index][field] = parseFloat(value) || 0;
+            const l = datos[index], hrs = parseFloat(document.getElementById('f_hrs').value) || 0;
+            const pgm = l.paros.filter(p => p.cat === 'PGM').reduce((a, b) => a + b.min, 0);
+            const objRaw = Math.max(0, (hrs - (pgm / 60)) * l.cad), objA = Math.max(l.realExt, objRaw);
+            updateOEEVisual(index, calcularOEE(l.realExt, objA));
+            document.getElementById(`obj_${index}`).innerText = `OBJ: ${objA.toFixed(1)} T`;
+            if(l.coater) updateOEEVisual(index, calcularOEE(l.realCoat, objA), true);
+            syncTotales();
+        }
+
+        function save() {
+            localStorage.setItem('stark_v51_datos', JSON.stringify(datos));
+            const tol = {}; idsTolvas.forEach(id => { const el = document.getElementById(`t_${id}`); if(el) tol[id] = el.value; });
+            localStorage.setItem('stark_v51_tolvas', JSON.stringify(tol));
+            const h = {
+                sup: document.getElementById('h_sup').value, opA: document.getElementById('h_iluoa').value, opB: document.getElementById('h_iluob').value,
+                t: document.getElementById('f_turno').value, hrs: document.getElementById('f_hrs').value, pre: document.getElementById('f_pre').value,
+                tr: document.getElementById('k_troja').value, ta: document.getElementById('k_tamari').value, to: document.getElementById('k_opl').value, ti: document.getElementById('k_inci').value, tac: document.getElementById('k_acci').value,
+                j1: document.getElementById('j_l1').value, j2: document.getElementById('j_l2').value, j3: document.getElementById('j_l3').value
+            };
+            localStorage.setItem('stark_v51_header', JSON.stringify(h));
+        }
+
+        function load() {
+            const sd = localStorage.getItem('stark_v51_datos'), sh = localStorage.getItem('stark_v51_header'), st = localStorage.getItem('stark_v51_tolvas');
+            datos = sd ? JSON.parse(sd) : config.map(l => ({ ...l, realExt: 0, realCoat: 0, paros: [], op: "" }));
+            if(sh) {
+                const h = JSON.parse(sh);
+                document.getElementById('h_sup').value = h.sup||""; document.getElementById('h_iluoa').value = h.opA||""; document.getElementById('h_iluob').value = h.opB||"";
+                document.getElementById('f_turno').value = h.t||"1 A"; document.getElementById('f_hrs').value = h.hrs||"12"; document.getElementById('f_pre').value = h.pre||"";
+                document.getElementById('k_troja').value = h.tr||0; document.getElementById('k_tamari').value = h.ta||0; document.getElementById('k_opl').value = h.to||0; document.getElementById('k_inci').value = h.ti||0; document.getElementById('k_acci').value = h.tac||0;
+                document.getElementById('j_l1').value = h.j1||0; document.getElementById('j_l2').value = h.j2||0; document.getElementById('j_l3').value = h.j3||0;
+                updateJumboColor(document.getElementById('j_l1')); updateJumboColor(document.getElementById('j_l2')); updateJumboColor(document.getElementById('j_l3'));
+                updateSecurityStatus();
+            }
+            if(st) { const tol = JSON.parse(st); idsTolvas.forEach(id => { if(document.getElementById(`t_${id}`)) { document.getElementById(`t_${id}`).value = tol[id] || 0; updateTolvaVisual(id, tol[id]); } }); }
+        }
+
+        function syncTotales() {
+            let tE = 0, oE = 0, tC = 0, oC = 0, tD = 0, oD = 0; const hrs = parseFloat(document.getElementById('f_hrs').value) || 0;
+            datos.forEach(l => {
+                const pgm = l.paros.filter(p => p.cat === 'PGM').reduce((a, b) => a + b.min, 0);
+                const objRaw = Math.max(0, (hrs - (pgm / 60)) * l.cad), objA = Math.max(l.realExt, objRaw);
+                if(l.id.startsWith('L')) { tE += l.realExt; oE += objA; if(l.coater) { tC += l.realCoat; oC += objA; } } else { tD += l.realExt; oD += objA; }
+            });
+            coreMetrics.extOEE = calcularOEE(tE, oE); coreMetrics.coatOEE = calcularOEE(tC, oC); coreMetrics.dosOEE = calcularOEE(tD, oD);
+            const getColor = (o) => o>=100?'var(--neon-green)':(o>=85?'var(--accent)':'var(--danger)');
+            document.getElementById('resumen_core').innerHTML = `
+                <div class="core-stat-block"><div class="core-stat-label">EXTRUIDO</div><div class="core-stat-val">${tE.toFixed(1)}T</div><div class="core-stat-oee" style="color:${getColor(coreMetrics.extOEE)}">${coreMetrics.extOEE.toFixed(1)}%</div></div>
+                <div class="core-stat-block"><div class="core-stat-label">COATER</div><div class="core-stat-val">${tC.toFixed(1)}T</div><div class="core-stat-oee" style="color:${getColor(coreMetrics.coatOEE)}">${coreMetrics.coatOEE.toFixed(1)}%</div></div>
+                <div class="core-stat-block"><div class="core-stat-label">DOSIF.</div><div class="core-stat-val">${tD.toFixed(1)}T</div><div class="core-stat-oee" style="color:${getColor(coreMetrics.dosOEE)}">${coreMetrics.dosOEE.toFixed(1)}%</div></div>`;
+            save();
+        }
+
+        function renderInitial() {
+            const container = document.getElementById('app'); container.innerHTML = '';
+            datos.forEach((l, i) => {
+                const card = document.createElement('div'); card.className = 'card';
+                let opHtml = (l.id === 'D2' || l.id === 'D3') ? `<input type="text" style="width:40%; background:#000; color:#444;" value="${datos[3].op}" disabled>` : `<input type="text" placeholder="Op" style="width:40%" value="${l.op}" oninput="datos[${i}].op=this.value; if(i===3){datos[4].op=this.value; datos[5].op=this.value; renderInitial();} save();">`;
+                card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><strong>${l.n}</strong>${opHtml}</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div class="oee-wrapper"><svg class="oee-svg"><circle class="oee-bg" cx="35" cy="35" r="30"></circle><circle id="oee_path_${i}" class="oee-progress" cx="35" cy="35" r="30"></circle></svg><div id="oee_val_${i}" class="oee-text">--%</div></div>
+                    <div style="flex-grow:1; display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                        <div><small>REAL (T)</small><input type="number" value="${l.realExt}" oninput="updateValue(${i}, 'realExt', this.value)"></div>
+                        <div style="text-align:right;"><small id="obj_${i}">OBJ: --</small><br><small>CAD (T/h)</small><input type="number" value="${l.cad}" oninput="updateValue(${i}, 'cad', this.value)"></div>
+                    </div>
+                </div>
+                ${l.coater ? `<div style="display:flex; align-items:center; gap:10px; margin-top:5px; padding-top:5px; border-top:1px solid #222"><div class="oee-wrapper"><svg class="oee-svg"><circle class="oee-bg" cx="35" cy="35" r="30"></circle><circle id="coater_path_${i}" class="oee-progress" cx="35" cy="35" r="30"></circle></svg><div id="coater_text_${i}" class="oee-text" style="font-size:10px">--%</div></div><div style="flex-grow:1"><small>COATER (T)</small><input type="number" value="${l.realCoat}" oninput="updateValue(${i}, 'realCoat', this.value)"></div></div>` : ''}
+                <button class="btn" style="width:100%; margin-top:8px; font-size:10px; background:#1a1a1a; color:#777; padding:4px" onclick="toggleEdit(${i})">+ EVENTO</button>
+                <div id="edit_zone_${i}"></div><div id="paros_list_${i}" style="font-size:10px; margin-top:5px"></div>`;
+                container.appendChild(card); updateValue(i, 'realExt', l.realExt); renderParos(i);
+            });
+        }
+
+        function toggleEdit(i) { 
+            const z = document.getElementById(`edit_zone_${i}`); 
+            if(z.innerHTML==="") {
+                actualizarDatalist();
+                z.innerHTML = `<div style="margin-top:5px; background:#111; padding:8px; border-radius:8px; border:1px solid #333;"><input type="text" id="m_${i}" placeholder="Motivo" list="lista_motivos_aprendidos" style="text-transform:uppercase;"><div class="grid-3" style="margin-top:5px"><input type="number" id="min_${i}" value="15"><select id="c_${i}"><option value="OPE">OPE</option><option value="F-T">F.TEC</option><option value="PGM">PGM</option></select><button class="btn" style="padding:5px" onclick="saveP(${i})">OK</button></div></div>`;
+            } else { z.innerHTML = ""; }
+        }
+
+        function saveP(i) { 
+            let m = document.getElementById(`m_${i}`).value.toUpperCase(); 
+            if(m){ 
+                datos[i].paros.push({mot:m, min:parseInt(document.getElementById(`min_${i}`).value), cat:document.getElementById(`c_${i}`).value}); 
+                
+                // GUARDAR MOTIVO EN DICCIONARIO PERSISTENTE
+                let dic = JSON.parse(localStorage.getItem('stark_diccionario')) || [];
+                if(!dic.includes(m)){ dic.push(m); localStorage.setItem('stark_diccionario', JSON.stringify(dic)); }
+                
+                document.getElementById(`edit_zone_${i}`).innerHTML = ""; 
+                renderParos(i); updateValue(i, 'realExt', datos[i].realExt); 
+            } 
+        }
+
+        function renderParos(i) { document.getElementById(`paros_list_${i}`).innerHTML = datos[i].paros.map((p,pi)=>`<div>• [${p.cat}] ${p.min}m: ${p.mot} <b onclick="delP(${i},${pi})" style="color:red">x</b></div>`).join(''); }
+        function delP(i,pi){ datos[i].paros.splice(pi,1); renderParos(i); updateValue(i, 'realExt', datos[i].realExt); }
+
+        function copiarWhatsApp() {
+            let f = document.getElementById('f_fecha').value.split('-').reverse().join('/'), t = document.getElementById('f_turno').value;
+            let txt = `*Reporte Turno ${t} - ${f}*\n*--------------------------------*\n`;
+            let sE = 0, oE = 0, sC = 0, oC = 0, sD = 0, oD = 0; const hrs = parseFloat(document.getElementById('f_hrs').value) || 0;
+
+            datos.forEach(l => {
+                let pgm = l.paros.filter(p => p.cat === 'PGM').reduce((a, b) => a + b.min, 0);
+                let objRaw = Math.max(0, (hrs - (pgm/60)) * l.cad), objA = Math.max(l.realExt, objRaw);
+                txt += `\n*${l.n.toUpperCase()}*\n`;
+                txt += `Prod: ${l.realExt} T (${calcularOEE(l.realExt, objA).toFixed(1)}%)\n`;
+                txt += `Obj: ${objA.toFixed(1)} T\n`;
+                if (l.paros.length > 0) {
+                    l.paros.forEach(p => txt += ` > ${p.min}m: ${p.mot}\n`);
+                } else if (l.realExt === 0) {
+                    txt += ` > _._\n`;
+                }
+                if(l.id.startsWith('L')) { sE += l.realExt; oE += objA; if(l.coater) { sC += l.realCoat; oC += objA; } } else { sD += l.realExt; oD += objA; }
+            });
+
+            if(document.getElementById('chk_tol').checked) { 
+                txt += `\n*TOLVAS PULMÓN:*\n`; 
+                idsTolvas.forEach(id => { 
+                    let v = document.getElementById(`t_${id}`).value; if(v && v !== "") txt += `T${id}: ${v}T\n`; 
+                }); 
+            }
+            txt += `\n*TOTAL EXTRUIDO:* ${sE.toFixed(1)}T (${calcularOEE(sE, oE).toFixed(1)}%)`;
+            txt += `\n*TOTAL COATER:* ${sC.toFixed(1)}T (${calcularOEE(sC, oC).toFixed(1)}%)`;
+            txt += `\n*TOTAL DOSIF:* ${sD.toFixed(1)}T (${calcularOEE(sD, oD).toFixed(1)}%)`;
+            if(document.getElementById('chk_pre').checked) { txt += `\n\n*PREMEZCLAS:* ${document.getElementById('f_pre').value || 'N/A'}`; }
+            navigator.clipboard.writeText(txt).then(() => alert("¡Reporte total copiado! 🦉🐾 miau"));
+        }
+
+        function prepararPDF() {
+            let tE = 0, oE = 0; const hrs = parseFloat(document.getElementById('f_hrs').value) || 0;
+            let bodyProd = "", bodyParos = "";
+            datos.forEach(l => {
+                let pgm = l.paros.filter(p => p.cat === 'PGM').reduce((a, b) => a + b.min, 0);
+                let objRaw = Math.max(0, (hrs - (pgm / 60)) * l.cad), objA = Math.max(l.realExt, objRaw), oee = calcularOEE(l.realExt, objA);
+                if(l.id.startsWith('L')) { tE += l.realExt; oE += objA; bodyProd += `<tr><td>${l.n}</td><td>${l.realExt.toFixed(1)}</td><td>${objA.toFixed(1)}</td><td>${oee.toFixed(1)}%</td><td>${(objA*0.85).toFixed(1)}</td><td>${oee>=85?'OK':'BAJO'}</td></tr>`; }
+                l.paros.forEach(p => { bodyParos += `<tr><td>${l.n}</td><td>${l.op || '-'}</td><td>${p.min}</td><td>${p.cat==='OPE'?p.min:0}</td><td>${p.cat==='F-T'?p.min:0}</td><td style="text-align:left">${p.mot}</td></tr>`; });
+            });
+            let jRow = `<tr><td>L1: ${document.getElementById('j_l1').value}</td><td>L2: ${document.getElementById('j_l2').value}</td><td>L3: ${document.getElementById('j_l3').value}</td></tr>`;
+            let sRow = `<tr><td>ROJ: ${document.getElementById('k_troja').value}</td><td>AMA: ${document.getElementById('k_tamari').value}</td><td>OPL: ${document.getElementById('k_opl').value}</td><td>INCI: ${document.getElementById('k_inci').value}</td><td>ACCI: ${document.getElementById('k_acci').value}</td></tr>`;
+            document.getElementById('reporte_imprimible').innerHTML = `<div style="text-align:center; font-size:14pt; font-weight:bold; margin-bottom:5px;">REPORTE OPERATIVO DE PLANTA</div><table><tr><td style="background:#eee">FECHA:</td><td>${document.getElementById('f_fecha').value}</td><td style="background:#eee">TURNO:</td><td>${document.getElementById('f_turno').value}</td><td style="background:#eee">SUPERVISOR:</td><td>${document.getElementById('h_sup').value.toUpperCase()}</td></tr></table><br><table><tr style="background:#eee"><td colspan="6">KPI PRODUCCIÓN EXTRUIDO</td></tr>${bodyProd}<tr style="font-weight:bold"><td>TOTAL</td><td>${tE.toFixed(1)}</td><td>${oE.toFixed(1)}</td><td>${calcularOEE(tE, oE).toFixed(1)}%</td><td colspan="2">-</td></tr></table><br><table><tr style="background:#eee"><td colspan="3">JUMBOS PENDIENTES</td></tr>${jRow}</table><br><table><tr style="background:#eee"><td colspan="5">SEGURIDAD</td></tr>${sRow}</table><br><table><tr style="background:#eee"><td colspan="6">DETALLE DE PAROS</td></tr><tbody style="font-size:8pt">${bodyParos || '<tr><td colspan="6">Sin paros reportados</td></tr>'}</tbody></table><br> Firma ILUO:________________ Firma Sup:________________`;
+            window.print();
+        }
+
+        function borrarDatos() { if(confirm("⚠️ ¿REINICIAR SISTEMA?")) { localStorage.clear(); location.reload(); } }
+
+        // --- MOTOR CANVAS DEL REACTOR DE FUSIÓN ⚛️ ---
+        let canvas, ctx, particles = [], arcs = [], clickPulse = 0;
+        function initCanvas() {
+            canvas = document.getElementById('core_canvas'); ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+            particles = []; for(let i=0; i<60; i++) particles.push(new Particle());
+            arcs = [{ r: 25, color: '--accent', metricsKey: 'extOEE', speed: 0 }, { r: 35, color: '--text', metricsKey: 'coatOEE', speed: 0 }, { r: 45, color: '--warning', metricsKey: 'dosOEE', speed: 0 }];
+            draw();
+        }
+        class Particle {
+            constructor() { this.reset(); }
+            reset() { this.x = Math.random()*canvas.width; this.y = Math.random()*canvas.height; this.size = Math.random()*1.5; this.spX = (Math.random()-0.5)*0.5; this.spY = (Math.random()-0.5)*0.5; this.a = Math.random(); }
+            update(globalSpeed) { this.x += this.spX * globalSpeed; this.y += this.spY * globalSpeed; this.a -= 0.005; if(this.a <= 0) this.reset(); }
+            draw() { ctx.fillStyle = `rgba(0, 255, 255, ${this.a})`; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill(); }
+        }
+        function draw() {
+            ctx.clearRect(0,0,canvas.width, canvas.height); let cx = canvas.width/2, cy = canvas.height/2 - 5, styles = getComputedStyle(document.documentElement);
+            let avgOEE = (coreMetrics.extOEE + coreMetrics.coatOEE + coreMetrics.dosOEE) / 300, globalSpeed = 0.5 + (avgOEE * 4);
+            if(clickPulse > 0) { ctx.strokeStyle = `rgba(0, 255, 255, ${clickPulse})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, 30 + (1-clickPulse)*30, 0, Math.PI*2); ctx.stroke(); clickPulse -= 0.02; globalSpeed += 3 * clickPulse; }
+            particles.forEach(p => { p.update(globalSpeed); p.draw(); });
+            arcs.forEach(arc => {
+                let oee = coreMetrics[arc.metricsKey], color = styles.getPropertyValue(oee >= 100 ? '--neon-green' : (oee >= 85 ? arc.color : '--danger'));
+                ctx.strokeStyle = color; ctx.lineWidth = oee >= 100 ? 3 : 1.5; ctx.lineCap = 'round';
+                if(oee >= 100) { ctx.shadowBlur = 10; ctx.shadowColor = color; } else { ctx.shadowBlur = 0; }
+                arc.speed += (0.01 + (oee/10000)) * globalSpeed; ctx.beginPath(); ctx.arc(cx, cy, arc.r, arc.speed, arc.speed + (Math.PI * 1.5 * (Math.min(oee,100)/100))); ctx.stroke();
+            });
+            ctx.shadowBlur = 0; requestAnimationFrame(draw);
+        }
+        function pulseCoreOnClick() { clickPulse = 1; }
+
+        // --- MOTOR DE CIRCUITOS DE FONDO ⚛️ miau ---
+        let ctxBg, w, h, nodes = [];
+        function initBg() { const canvasBg = document.getElementById('bg_circuits'); ctxBg = canvasBg.getContext('2d'); resize(); nodes = []; for (let i = 0; i < 40; i++) nodes.push(new Node()); animateBg(); }
+        function resize() { w = window.innerWidth; h = window.innerHeight; document.getElementById('bg_circuits').width = w; document.getElementById('bg_circuits').height = h; }
+        class Node {
+            constructor() { this.reset(); }
+            reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.vx = (Math.random() - 0.5) * 0.3; this.vy = (Math.random() - 0.5) * 0.3; }
+            update() { this.x += this.vx; this.y += this.vy; if (this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset(); }
+        }
+        function animateBg() {
+            ctxBg.clearRect(0, 0, w, h);
+            ctxBg.strokeStyle = '#00ffff'; 
+            ctxBg.lineWidth = 1.8;
+            nodes.forEach((n, i) => {
+                n.update();
+                nodes.slice(i + 1).forEach(n2 => {
+                    let dist = Math.hypot(n.x - n2.x, n.y - n2.y);
+                    if (dist < 220) {
+                        ctxBg.beginPath();
+                        ctxBg.globalAlpha = (1 - dist / 220) * 0.8;
+                        ctxBg.moveTo(n.x, n.y);
+                        ctxBg.lineTo(n2.x, n2.y);
+                        ctxBg.stroke();
+                        ctxBg.fillStyle = '#00ffff';
+                        ctxBg.globalAlpha = 0.5;
+                        ctxBg.beginPath();
+                        ctxBg.arc(n.x, n.y, 1.5, 0, Math.PI*2);
+                        ctxBg.fill();
+                    }
+                });
+            });
+            requestAnimationFrame(animateBg);
+        }
+        window.addEventListener('resize', resize);
+
+        window.onload = () => {
+            document.getElementById('f_fecha').valueAsDate = new Date();
+            let th = ""; idsTolvas.forEach(id => {
+                th += `<div><small>T${id}</small><b id="val_${id}" style="font-size:10px; float:right;">0T</b><div class="energy-bar-bg"><div id="fill_${id}" class="energy-fill"></div></div><input type="number" id="t_${id}" placeholder="Ton" style="margin-top:2px; padding:3px; font-size:12px;" oninput="updateTolvaVisual('${id}', this.value)"></div>`;
+            });
+            document.getElementById('tolvas_hud').innerHTML = th; 
+            load(); 
+            renderInitial(); 
+            initCanvas(); 
+            initBg();
+        };
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log("Sistema Arise: PWA Activa miau"))
+                .catch(err => console.log("Fallo el sistema miau:", err));
+        }
+    </script>
+</body>
+</html>

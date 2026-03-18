@@ -1,0 +1,16 @@
+{
+  "name": "AETHEL V5.2 - CYBER CORE",
+  "short_name": "Aethel OEE",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#030303",
+  "theme_color": "#00ffff",
+  "icons": [
+    {
+      "src": "icono.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
